@@ -9,5 +9,20 @@ package flc.model;
  * @author basitmalik
  */
 public class Member {
-    
+
+    private String memberID;
+    private String name;
+
+    public Member(String memberID, String name) {
+        this.memberID = memberID;
+        this.name = name;
+    }
+
+    public String getMemberID() {
+        return memberID;
+    }
+
+    public String getName() {
+        return name;
+    }
 }
