@@ -10,6 +10,7 @@ package flc.service;
  */
 import flc.model.*;
 import java.util.*;
+
 public class LeisureCentre {
 
     private List<Lesson> lessons = new ArrayList<>();
@@ -36,7 +37,7 @@ public class LeisureCentre {
         return result;
     }
 
-    // Requirement: Search by Exercise [cite: 83, 130]
+    // Requirement: Search by Exercise
     public List<Lesson> searchByType(String type) {
         List<Lesson> result = new ArrayList<>();
         for (Lesson l : lessons) {
@@ -59,7 +60,7 @@ public class LeisureCentre {
             return "Lesson is full.";
         }
 
-        // Check for duplicate booking [cite: 132, 192]
+        // Check for duplicate booking 
         for (Booking b : bookings) {
             if (b.getMember().getMemberID().equals(memberID)
                     && b.getLesson().getLessonID().equals(lessonID)
@@ -90,6 +91,39 @@ public class LeisureCentre {
         }
         return null;
     }
+    
+    //  Requirement: Change or Cancel a Booking
+    public String changeOrCancelBooking(int bID, String newLessonID, boolean isCancellation) {
+        Booking booking = null;
+        for (Booking b : bookings) {
+            if (b.getBookingID() == bID) {
+                booking = b;
+                break;
+            }
+        }
 
-    // You will add the report methods here later...
+        if (booking == null) {
+            return "Booking ID not found.";
+        }
+
+        // Release slot from the old lesson
+        booking.getLesson().removeParticipant(booking.getMember());
+
+        if (isCancellation) {
+            booking.setStatus("Cancelled");
+            return "Booking cancelled successfully.";
+        }
+
+        // Change Logic
+        Lesson newLesson = findLesson(newLessonID);
+        if (newLesson == null || newLesson.isFull()) {
+            booking.getLesson().addParticipant(booking.getMember()); // Revert
+            return "Change failed: New lesson is full or invalid.";
+        }
+
+        newLesson.addParticipant(booking.getMember());
+        booking.setLesson(newLesson);
+        booking.setStatus("Changed");
+        return "Booking changed successfully.";
+    }
 }
