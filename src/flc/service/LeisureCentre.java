@@ -126,4 +126,35 @@ public class LeisureCentre {
         booking.setStatus("Changed");
         return "Booking changed successfully.";
     }
+    
+    // Requirement: Attend and Rate
+    public String attendLesson(int bID, int rating, String reviewText) {
+    for (Booking b : bookings) {
+        if (b.getBookingID() == bID && b.getStatus().equals("Booked") || b.getStatus().equals("Changed")) {
+            b.setStatus("Attended");
+            Review r = new Review(rating, reviewText);
+            b.getLesson().addReview(r);
+            return "Attendance recorded.";
+        }
+    }
+    return "Booking not eligible for attendance.";
+}
+
+// Requirement: Monthly Lesson Report
+public void generateMonthlyReport(int monthNum) {
+    System.out.println("--- Monthly Lesson Report (Month " + monthNum + ") ---");
+    // Month 1 = Weekends 1-4; Month 2 = Weekends 5-8
+    int startW = (monthNum == 1) ? 1 : 5;
+    int endW = (monthNum == 1) ? 4 : 8;
+
+    for (Lesson l : lessons) {
+        int weekend = Integer.parseInt(l.getLessonID().substring(1, 2));
+        if (weekend >= startW && weekend <= endW) {
+            long attendedCount = bookings.stream()
+                .filter(b -> b.getLesson().equals(l) && b.getStatus().equals("Attended"))
+                .count();
+            System.out.println(l.getLessonID() + " | Attended: " + attendedCount + " | Avg Rating: " + String.format("%.1f", l.getAverageRating()));
+        }
+    }
+}
 }
