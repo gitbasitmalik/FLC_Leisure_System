@@ -50,29 +50,21 @@ public class LeisureCentre {
 
     // Requirement: Book a Lesson
     public String bookLesson(String memberID, String lessonID) {
-        Member member = findMember(memberID);
-        Lesson lesson = findLesson(lessonID);
+    Member member = findMember(memberID);
+    Lesson lesson = findLesson(lessonID);
 
-        if (member == null || lesson == null) {
-            return "Invalid ID.";
-        }
-        if (lesson.isFull()) {
-            return "Lesson is full.";
-        }
+    if (member == null || lesson == null) return "Invalid ID.";
+    if (lesson.isFull()) return "Lesson is full.";
+    
+    // ... (keep your duplicate check logic here)
 
-        // Check for duplicate booking 
-        for (Booking b : bookings) {
-            if (b.getMember().getMemberID().equals(memberID)
-                    && b.getLesson().getLessonID().equals(lessonID)
-                    && !b.getStatus().equals("Cancelled")) {
-                return "Duplicate booking not allowed.";
-            }
-        }
-
-        lesson.addParticipant(member);
-        bookings.add(new Booking(nextBookingID++, member, lesson));
-        return "Booking successful!";
-    }
+    Booking newBooking = new Booking(nextBookingID++, member, lesson);
+    bookings.add(newBooking);
+    lesson.addParticipant(member);
+    
+    // Return the ID so the user sees it!
+    return "Booking successful! Your Booking ID is: " + newBooking.getBookingID();
+}
 
     private Member findMember(String id) {
         for (Member m : members) {
@@ -91,7 +83,7 @@ public class LeisureCentre {
         }
         return null;
     }
-    
+
     //  Requirement: Change or Cancel a Booking
     public String changeOrCancelBooking(int bID, String newLessonID, boolean isCancellation) {
         Booking booking = null;
@@ -126,35 +118,60 @@ public class LeisureCentre {
         booking.setStatus("Changed");
         return "Booking changed successfully.";
     }
-    
+
     // Requirement: Attend and Rate
     public String attendLesson(int bID, int rating, String reviewText) {
-    for (Booking b : bookings) {
-        if (b.getBookingID() == bID && b.getStatus().equals("Booked") || b.getStatus().equals("Changed")) {
-            b.setStatus("Attended");
-            Review r = new Review(rating, reviewText);
-            b.getLesson().addReview(r);
-            return "Attendance recorded.";
+        for (Booking b : bookings) {
+            if (b.getBookingID() == bID && b.getStatus().equals("Booked") || b.getStatus().equals("Changed")) {
+                b.setStatus("Attended");
+                Review r = new Review(rating, reviewText);
+                b.getLesson().addReview(r);
+                return "Attendance recorded.";
+            }
         }
+        return "Booking not eligible for attendance.";
     }
-    return "Booking not eligible for attendance.";
-}
 
 // Requirement: Monthly Lesson Report
-public void generateMonthlyReport(int monthNum) {
-    System.out.println("--- Monthly Lesson Report (Month " + monthNum + ") ---");
-    // Month 1 = Weekends 1-4; Month 2 = Weekends 5-8
-    int startW = (monthNum == 1) ? 1 : 5;
-    int endW = (monthNum == 1) ? 4 : 8;
+    public void generateMonthlyReport(int monthNum) {
+        System.out.println("--- Monthly Lesson Report (Month " + monthNum + ") ---");
+        // Month 1 = Weekends 1-4; Month 2 = Weekends 5-8
+        int startW = (monthNum == 1) ? 1 : 5;
+        int endW = (monthNum == 1) ? 4 : 8;
 
-    for (Lesson l : lessons) {
-        int weekend = Integer.parseInt(l.getLessonID().substring(1, 2));
-        if (weekend >= startW && weekend <= endW) {
-            long attendedCount = bookings.stream()
-                .filter(b -> b.getLesson().equals(l) && b.getStatus().equals("Attended"))
-                .count();
-            System.out.println(l.getLessonID() + " | Attended: " + attendedCount + " | Avg Rating: " + String.format("%.1f", l.getAverageRating()));
+        for (Lesson l : lessons) {
+            int weekend = Integer.parseInt(l.getLessonID().substring(1, 2));
+            if (weekend >= startW && weekend <= endW) {
+                long attendedCount = bookings.stream()
+                        .filter(b -> b.getLesson().equals(l) && b.getStatus().equals("Attended"))
+                        .count();
+                System.out.println(l.getLessonID() + " | Attended: " + attendedCount + " | Avg Rating: " + String.format("%.1f", l.getAverageRating()));
+            }
         }
     }
-}
+    
+    // Requirement: Champion Exercise Report
+
+    public void generateChampionReport(int monthNum) {
+        Map<String, Double> incomeMap = new HashMap<>();
+        int startW = (monthNum == 1) ? 1 : 5;
+        int endW = (monthNum == 1) ? 4 : 8;
+
+        for (Booking b : bookings) {
+            int weekend = Integer.parseInt(b.getLesson().getLessonID().substring(1, 2));
+            if (b.getStatus().equals("Attended") && weekend >= startW && weekend <= endW) {
+                String type = b.getLesson().getExercise().getName();
+                double price = b.getLesson().getExercise().getPrice();
+                incomeMap.put(type, incomeMap.getOrDefault(type, 0.0) + price);
+            }
+        }
+
+        System.out.println("--- Champion Exercise Report ---");
+        incomeMap.forEach((name, income) -> System.out.println(name + ": £" + income));
+
+        String champion = incomeMap.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey).orElse("None");
+        System.out.println("Champion: " + champion);
+    }
 }

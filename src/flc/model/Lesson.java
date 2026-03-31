@@ -73,4 +73,8 @@ public class Lesson {
     public void addReview(Review r) {
         reviews.add(r);
     }
+    
+    public String getTimeSlot() {
+    return timeSlot;
+}
 }
