@@ -56,7 +56,13 @@ public class LeisureCentre {
     if (member == null || lesson == null) return "Invalid ID.";
     if (lesson.isFull()) return "Lesson is full.";
     
-    // ... (keep your duplicate check logic here)
+    for (Booking b : bookings) {
+            if (b.getMember().getMemberID().equals(memberID) && 
+                b.getLesson().getLessonID().equals(lessonID) &&
+                !b.getStatus().equals("Cancelled")) {
+                return "Duplicate booking not allowed."; // This matches your JUnit test expectation
+            }
+        }
 
     Booking newBooking = new Booking(nextBookingID++, member, lesson);
     bookings.add(newBooking);
